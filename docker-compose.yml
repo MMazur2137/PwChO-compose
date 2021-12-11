@@ -1,0 +1,68 @@
+version: '3'
+ 
+services:
+
+ nginx:
+    container_name: nginx
+    image: nginx:alpine
+    expose:
+    - 6666
+    depends_on:
+      - php
+      - db
+    volumes:
+      - ./www:/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./public:/php.php
+    networks:
+      - back
+      - front
+ php:
+    container_name: php
+    build: .
+    image: php
+    volumes:
+        - ./www:/www
+        - .docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    ports:
+      - "9000:9000"
+    networks:
+      - back
+
+ db:
+    image: mysql
+    container_name: db
+    environment:
+      MYSQL_ROOT_PASSWORD: my_secret_password
+      MYSQL_DATABASE: app_db
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: db_user_pass
+    ports:
+      - "6033:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - back
+#phpmyadmin
+ phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: pma
+    links:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    restart: always
+    ports:
+      - 6001:80
+    networks:
+      - back
+
+volumes:
+  dbdata:
+
+networks:
+      back:
+       driver: bridge
+      front:
